@@ -18,17 +18,20 @@ const styles: Record<Priority, { label: string; className: string }> = {
   },
 }
 
-export function PriorityTag({ priority }: { priority: Priority }) {
+export function PriorityTag({ priority, score }: { priority: Priority; score: number }) {
   const { label, className } = styles[priority]
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-xs font-medium',
+        'inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium',
         className,
       )}
     >
       <span className="sr-only">Priority: </span>
       {label}
+      <span aria-hidden="true">·</span>
+      <span className="sr-only">, score </span>
+      <span className="tabular-nums">{score}</span>
     </span>
   )
 }

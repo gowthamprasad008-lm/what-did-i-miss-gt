@@ -36,7 +36,7 @@ export function ResultSection({ id, title, icon: Icon, items, emptyText }: Resul
                     {item.time}
                   </time>
                 </div>
-                <PriorityTag priority={item.priority} />
+                <PriorityTag priority={item.priority} score={item.score} />
               </div>
               <p className="whitespace-pre-line break-words text-pretty text-sm leading-relaxed text-muted-foreground">
                 {item.message}

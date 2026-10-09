@@ -32,14 +32,17 @@ const DEADLINE_PATTERNS = [
   /\b(?:today|tomorrow|tonight|eod|asap|due|deadline)\b/i,
   new RegExp(`\\bby\\s+${WEEKDAY}\\b`, 'i'),
   /\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b/i,
+  // 24-hour clock inside the message body, e.g. "15:00". Timestamps are already stripped by the parser.
+  /(?<![\d:])(?:[01]?\d|2[0-3]):[0-5]\d(?![\d:])/,
   new RegExp(`\\b${MONTH}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b`, 'i'),
   new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\b`, 'i'),
 ]
 
-const REQUEST_PATTERN = /\b(?:can you|could you|please|need you to)\b/i
+const ACTION_PATTERN =
+  /\b(?:can you|could you|can someone|please|need to|need you to|i['\u2019]ll|i will|make sure|don['\u2019]t forget)\b/i
 
 const DECISION_PATTERN =
-  /\b(?:decided|final decision|agreed|we go with|let['\u2019]?s go with|finali[sz]ed|approved)\b/i
+  /\b(?:decided|final decision|agreed|we go with|let['\u2019]?s go with|finali[sz]ed|approved|moved to|postponed|rescheduled|cancell?ed)\b/i
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -148,15 +151,16 @@ export function analyzeChat(messages: ParsedMessage[], name: string): AnalysisRe
     const text = message.text
     const isMention = namePattern ? namePattern.test(text) : false
     const isDeadline = DEADLINE_PATTERNS.some((pattern) => pattern.test(text))
-    const isAction = text.trimEnd().endsWith('?') || REQUEST_PATTERN.test(text)
+    const isQuestion = text.trimEnd().endsWith('?')
+    const isAction = ACTION_PATTERN.test(text)
     const isDecision = DECISION_PATTERN.test(text)
     const isRecent = index >= recentStart
 
     const score =
       (isMention ? 3 : 0) +
       (isDeadline ? 3 : 0) +
-      (isAction ? 2 : 0) +
-      (isDecision ? 2 : 0) +
+      (isQuestion || isAction ? 2 : 0) +
+      (isDecision ? 3 : 0) +
       (isRecent ? 1 : 0)
 
     return { index, message, score, isMention, isDeadline, isDecision, isAction }
