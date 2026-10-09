@@ -1,4 +1,15 @@
 import type { ParsedMessage } from '@/lib/parse-chat'
+import {
+  ACTION_PHRASES,
+  DEADLINE_WORDS,
+  DECISION_PHRASES,
+  MONTHS,
+  POINTS,
+  PRIORITY_THRESHOLDS,
+  RECENT_FRACTION,
+  TIME_PATTERNS,
+  WEEKDAYS,
+} from '@/lib/rules'
 
 export type Priority = 'high' | 'medium' | 'low'
 
@@ -25,29 +36,35 @@ export type AnalysisResult = {
   actionItems: ResultItem[]
 }
 
-const WEEKDAY = '(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day|nesday|sday|urday)?'
-const MONTH =
-  '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)(?:uary|ruary|ch|il|e|y|ust|tember|ober|ember)?'
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Longest phrases first so the alternation never stops at a shorter prefix. */
+function alternation(phrases: string[]) {
+  return [...phrases]
+    .sort((a, b) => b.length - a.length)
+    .map((phrase) => escapeRegExp(phrase).replace(/'/g, "['\u2019]"))
+    .join('|')
+}
+
+function phrasePattern(phrases: string[]) {
+  return new RegExp(`\\b(?:${alternation(phrases)})\\b`, 'i')
+}
+
+const WEEKDAY = `(?:${alternation(WEEKDAYS)})`
+const MONTH = `(?:${alternation(MONTHS)})`
 
 const DEADLINE_PATTERNS = [
-  /\b(?:today|tomorrow|tonight|eod|asap|due|deadline)\b/i,
+  phrasePattern(DEADLINE_WORDS),
   new RegExp(`\\bby\\s+${WEEKDAY}\\b`, 'i'),
-  /\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b/i,
-  // 24-hour clock inside the message body, e.g. "15:00". Timestamps are already stripped by the parser.
-  /(?<![\d:])(?:[01]?\d|2[0-3]):[0-5]\d(?![\d:])/,
+  ...TIME_PATTERNS,
   new RegExp(`\\b${MONTH}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b`, 'i'),
   new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\b`, 'i'),
 ]
 
-const ACTION_PATTERN =
-  /\b(?:can you|could you|can someone|please|need to|need you to|i['\u2019]ll|i will|make sure|don['\u2019]t forget)\b/i
-
-const DECISION_PATTERN =
-  /\b(?:decided|final decision|agreed|we go with|let['\u2019]?s go with|finali[sz]ed|approved|moved to|postponed|rescheduled|cancell?ed)\b/i
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
+const ACTION_PATTERN = phrasePattern(ACTION_PHRASES)
+const DECISION_PATTERN = phrasePattern(DECISION_PHRASES)
 
 function buildNamePattern(name: string): RegExp | null {
   const trimmed = name.trim()
@@ -57,8 +74,8 @@ function buildNamePattern(name: string): RegExp | null {
 }
 
 function toPriority(score: number): Priority {
-  if (score >= 5) return 'high'
-  if (score >= 3) return 'medium'
+  if (score >= PRIORITY_THRESHOLDS.high) return 'high'
+  if (score >= PRIORITY_THRESHOLDS.medium) return 'medium'
   return 'low'
 }
 
@@ -146,7 +163,7 @@ function buildSummary(
 
 export function analyzeChat(messages: ParsedMessage[], name: string): AnalysisResult {
   const namePattern = buildNamePattern(name)
-  const recentStart = messages.length - Math.ceil(messages.length * 0.25)
+  const recentStart = messages.length - Math.ceil(messages.length * RECENT_FRACTION)
 
   const scored: ScoredMessage[] = messages.map((message, index) => {
     const text = message.text
@@ -158,11 +175,11 @@ export function analyzeChat(messages: ParsedMessage[], name: string): AnalysisRe
     const isRecent = index >= recentStart
 
     const score =
-      (isMention ? 3 : 0) +
-      (isDeadline ? 3 : 0) +
-      (isQuestion || isAction ? 2 : 0) +
-      (isDecision ? 3 : 0) +
-      (isRecent ? 1 : 0)
+      (isMention ? POINTS.mention : 0) +
+      (isDeadline ? POINTS.deadline : 0) +
+      (isQuestion || isAction ? POINTS.questionOrRequest : 0) +
+      (isDecision ? POINTS.decision : 0) +
+      (isRecent ? POINTS.recent : 0)
 
     return { index, message, score, isMention, isDeadline, isDecision, isAction }
   })
