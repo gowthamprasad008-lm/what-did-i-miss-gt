@@ -3,14 +3,15 @@
 import { useRef, useState } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { ChatInputPanel } from '@/components/chat-input-panel'
-import { ParseDebugView } from '@/components/results/parse-debug-view'
-import { SAMPLE_CHAT } from '@/lib/mock-analysis'
-import { parseChat, type ParsedMessage } from '@/lib/parse-chat'
+import { ResultsArea } from '@/components/results/results-area'
+import { analyzeChat, type AnalysisResult } from '@/lib/analyze-chat'
+import { parseChat } from '@/lib/parse-chat'
+import { SAMPLE_CHAT } from '@/lib/sample-chat'
 
 export function WhatDidIMiss() {
   const [chat, setChat] = useState('')
   const [name, setName] = useState('')
-  const [parsed, setParsed] = useState<ParsedMessage[] | null>(null)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
   const resultsRef = useRef<HTMLElement>(null)
 
   function handleLoadSample() {
@@ -19,7 +20,7 @@ export function WhatDidIMiss() {
   }
 
   function handleAnalyze() {
-    setParsed(parseChat(chat))
+    setResult(analyzeChat(parseChat(chat), name))
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
@@ -38,7 +39,7 @@ export function WhatDidIMiss() {
         onAnalyze={handleAnalyze}
       />
       <section ref={resultsRef} aria-label="Results" aria-live="polite" className="scroll-mt-6">
-        <ParseDebugView messages={parsed} />
+        <ResultsArea result={result} />
       </section>
     </main>
   )

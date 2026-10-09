@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import type { ResultItem } from '@/lib/mock-analysis'
+import type { ResultItem } from '@/lib/analyze-chat'
 import { PriorityTag } from './priority-tag'
 
 type ResultSectionProps = {
@@ -38,7 +38,7 @@ export function ResultSection({ id, title, icon: Icon, items, emptyText }: Resul
                 </div>
                 <PriorityTag priority={item.priority} />
               </div>
-              <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+              <p className="whitespace-pre-line break-words text-pretty text-sm leading-relaxed text-muted-foreground">
                 {item.message}
               </p>
             </li>

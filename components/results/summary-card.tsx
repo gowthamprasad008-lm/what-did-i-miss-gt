@@ -1,4 +1,4 @@
-import type { AnalysisResult } from '@/lib/mock-analysis'
+import type { AnalysisResult } from '@/lib/analyze-chat'
 
 type SummaryCardProps = {
   result: AnalysisResult

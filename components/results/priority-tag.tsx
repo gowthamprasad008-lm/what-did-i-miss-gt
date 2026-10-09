@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { Priority } from '@/lib/mock-analysis'
+import type { Priority } from '@/lib/analyze-chat'
 
 const styles: Record<Priority, { label: string; className: string }> = {
   high: {

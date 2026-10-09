@@ -1,5 +1,5 @@
 import { AtSign, CalendarClock, CheckCircle2, ListTodo, MessageSquareText } from 'lucide-react'
-import type { AnalysisResult } from '@/lib/mock-analysis'
+import type { AnalysisResult } from '@/lib/analyze-chat'
 import { ResultSection } from './result-section'
 import { SummaryCard } from './summary-card'
 
