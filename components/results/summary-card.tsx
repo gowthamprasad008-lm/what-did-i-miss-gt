@@ -5,17 +5,10 @@ type SummaryCardProps = {
 }
 
 export function SummaryCard({ result }: SummaryCardProps) {
-  const highCount = [
-    ...result.mentions,
-    ...result.deadlines,
-    ...result.decisions,
-    ...result.actionItems,
-  ].filter((item) => item.priority === 'high').length
-
   const stats = [
     { label: 'Messages', value: result.stats.messages },
     { label: 'People', value: result.stats.participants },
-    { label: 'High priority', value: highCount },
+    { label: 'High priority', value: result.stats.highPriority },
     { label: 'Time span', value: result.stats.timeSpan },
   ]
 

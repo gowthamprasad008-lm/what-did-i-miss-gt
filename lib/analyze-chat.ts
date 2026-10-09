@@ -16,6 +16,7 @@ export type AnalysisResult = {
   stats: {
     messages: number
     participants: number
+    highPriority: number
     timeSpan: string
   }
   mentions: ResultItem[]
@@ -178,6 +179,13 @@ export function analyzeChat(messages: ParsedMessage[], name: string): AnalysisRe
   const timeSpan =
     messages.length > 0 ? `${messages[0].time} – ${messages[messages.length - 1].time}` : '—'
 
+  const sectionedIds = new Set(
+    [...mentions, ...deadlines, ...decisions, ...actionItems].map((item) => item.id),
+  )
+  const highPriority = scored.filter(
+    (item) => sectionedIds.has(`msg-${item.index}`) && toPriority(item.score) === 'high',
+  ).length
+
   const top = [...scored].sort(byScoreThenTime).slice(0, 2)
 
   return {
@@ -193,7 +201,7 @@ export function analyzeChat(messages: ParsedMessage[], name: string): AnalysisRe
       },
       top,
     ),
-    stats: { messages: messages.length, participants, timeSpan },
+    stats: { messages: messages.length, participants, highPriority, timeSpan },
     mentions,
     deadlines,
     decisions,
