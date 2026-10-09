@@ -3,14 +3,14 @@
 import { useRef, useState } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { ChatInputPanel } from '@/components/chat-input-panel'
-import { ResultsArea } from '@/components/results/results-area'
-import { getMockAnalysis, SAMPLE_CHAT, type AnalysisResult } from '@/lib/mock-analysis'
+import { ParseDebugView } from '@/components/results/parse-debug-view'
+import { SAMPLE_CHAT } from '@/lib/mock-analysis'
+import { parseChat, type ParsedMessage } from '@/lib/parse-chat'
 
 export function WhatDidIMiss() {
   const [chat, setChat] = useState('')
   const [name, setName] = useState('')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [parsed, setParsed] = useState<ParsedMessage[] | null>(null)
   const resultsRef = useRef<HTMLElement>(null)
 
   function handleLoadSample() {
@@ -19,12 +19,10 @@ export function WhatDidIMiss() {
   }
 
   function handleAnalyze() {
-    setIsAnalyzing(true)
-    setTimeout(() => {
-      setResult(getMockAnalysis(name))
-      setIsAnalyzing(false)
+    setParsed(parseChat(chat))
+    requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 700)
+    })
   }
 
   return (
@@ -33,14 +31,14 @@ export function WhatDidIMiss() {
       <ChatInputPanel
         chat={chat}
         name={name}
-        isAnalyzing={isAnalyzing}
+        isAnalyzing={false}
         onChatChange={setChat}
         onNameChange={setName}
         onLoadSample={handleLoadSample}
         onAnalyze={handleAnalyze}
       />
       <section ref={resultsRef} aria-label="Results" aria-live="polite" className="scroll-mt-6">
-        <ResultsArea result={result} />
+        <ParseDebugView messages={parsed} />
       </section>
     </main>
   )
